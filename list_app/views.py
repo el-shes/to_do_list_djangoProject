@@ -21,3 +21,14 @@ class CreateTask(CreateView):
     model = Task
     fields = "__all__"
     success_url = reverse_lazy('tasks')
+
+
+class UpdateTask(UpdateView):
+    model = Task
+    fields = "__all__"
+    success_url = reverse_lazy('tasks')
+
+
+class DeleteTask(DeleteView):
+    model = Task
+    success_url = reverse_lazy('tasks')
