@@ -1,4 +1,4 @@
-from django.shortcuts import render
+
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
@@ -6,6 +6,7 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 
 from django.contrib.auth.views import LoginView
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from list_app.models import Task
 
@@ -21,26 +22,38 @@ class CustomLoginView(LoginView):
     def get_success_url(self):
         return reverse_lazy('tasks')
 
-class TaskList(ListView):
+
+class TaskList(LoginRequiredMixin, ListView):
+    model = Task
+    context_object_name = 'tasks'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tasks'] = context['tasks'].filter(user=self.request.user)
+        context['count'] = context['tasks'].filter(complete=False).count()
+        return context
+
+
+class TaskDetail(LoginRequiredMixin, DetailView):
     model = Task
 
 
-class TaskDetail(DetailView):
+class CreateTask(LoginRequiredMixin, CreateView):
     model = Task
+    fields = ['task_title', 'task_description', 'complete']
+    success_url = reverse_lazy('tasks')
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super(CreateTask, self).form_valid(form)
 
 
-class CreateTask(CreateView):
+class UpdateTask(LoginRequiredMixin, UpdateView):
     model = Task
-    fields = "__all__"
+    fields = ['task_title', 'task_description', 'complete']
     success_url = reverse_lazy('tasks')
 
 
-class UpdateTask(UpdateView):
-    model = Task
-    fields = "__all__"
-    success_url = reverse_lazy('tasks')
-
-
-class DeleteTask(DeleteView):
+class DeleteTask(LoginRequiredMixin, DeleteView):
     model = Task
     success_url = reverse_lazy('tasks')
